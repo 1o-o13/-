@@ -1,0 +1,11 @@
+# nli 서비스 (CE bge-reranker-v2-m3 · NLI mDeBERTa-v3-base-xnli, CPU) · Python 3.12 — 11/9 추가 (RAG TRD 12쪽 모델표)
+# torch는 CPU 판 (https://download.pytorch.org/whl/cpu). GPU 6GB는 qwen3·STT가 쓰므로 둘 다 CPU에서 돌린다 (임시: GPU 서버에서는 reranker fp16 GPU)
+torch==2.15.0+cpu
+transformers==5.22.2
+sentencepiece==0.2.3
+fastapi==0.162.0           # tts·api와 같은 버전
+uvicorn[standard]==0.54.0
+pydantic==2.13.5
+numpy==2.5.4               # 다른 컨테이너와 같은 버전
+huggingface-hub==2.4.0     # stt·tts와 같은 버전
+tokenizers==0.23.3         # stt와 같은 버전

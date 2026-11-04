@@ -1,0 +1,6 @@
+# 개발·시험용 (모든 Python 컨테이너 공통, 운영 이미지에는 넣지 않음)
+pytest==9.2.0
+pytest-asyncio==1.4.1
+ruff==0.17.3
+aiosmtpd==1.4.6  # 메일 발송 시험용 로컬 SMTP
+pgserver==0.1.4  # pgvector 시험용 로컬 PostgreSQL

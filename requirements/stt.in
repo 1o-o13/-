@@ -1,0 +1,10 @@
+# stt-worker 컨테이너 (Python 3.12, GPU) — 2026-10-29 설치·실행 검증
+faster-whisper==1.2.1
+ctranslate2==4.8.4  # CUDA 12 + cuDNN 9 필요
+av==17.1.0  # 19 이상은 faster-whisper 1.2.1과 충돌, aiortc 1.15는 18 미만 요구 → 17.1.0으로 통일
+numpy==2.5.4
+celery==5.6.3
+redis==6.4.0
+
+# api(boto3)와 같은 버전으로 맞춤
+python-dateutil==2.9.0.post0

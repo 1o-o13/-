@@ -1,0 +1,9 @@
+데이터베이스 설계 (PostgreSQL + pgvector)
+
+common_schema.sql        공통 DB (지원자·공고·지원서·1차·코딩 등). 다른 파트 소유라 수정 금지
+interview_schema.sql     면접 테이블 13개 + 규칙 제약(CHECK). 바꾸려면 먼저 승인 필요
+                         제약이 규칙의 정답 → 코드를 제약에 맞춤
+test_full_flow.py        채용 요청부터 최종 합격까지 전체 흐름이 DB에 잘 들어가는지 시험
+test_interview_schema.py 면접 1건을 끝까지 넣어 보고, 규칙 위반이 막히는지 시험
+
+지워도 되나: 안 됨

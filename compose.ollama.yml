@@ -1,0 +1,24 @@
+# 무료판 LLM·임베딩 서버. 기존 compose에 합쳐서 사용 (GPU 서버, NVIDIA Container Toolkit 필요)
+services:
+  ollama:
+    image: ollama/ollama:0.40.12         # 팀원 B 기준 버전 (설치 때 태그 존재 확인)
+    restart: unless-stopped
+    volumes: [ "ollama:/root/.ollama" ]   # 모델 파일 보관
+    environment:
+      OLLAMA_KEEP_ALIVE: "24h"            # 면접 중 모델 내려가지 않게
+      OLLAMA_NUM_PARALLEL: "2"            # 동시 요청 수. 임시: 6GB GPU(1660 SUPER)에 STT와 같이 올리면 4는 모델 일부가 CPU로 밀려 느려짐 (11/9). GPU 서버에서는 다시 측정
+      OLLAMA_MAX_LOADED_MODELS: "3"       # qwen3:4b + qwen3:1.7b + bge-m3 동시 상주 (팀원 B와 같은 서버·모델 공유)
+    deploy:
+      resources:
+        reservations:
+          devices: [ { driver: nvidia, count: all, capabilities: [gpu] } ]
+    # 외부에 포트 열지 않음. api·llm-worker만 내부망 http://ollama:11434 로 접근
+  ollama-pull:                            # 처음 한 번 모델 내려받기 (docker compose --profile pull run --rm ollama-pull)
+    image: ollama/ollama:0.40.12
+    profiles: [ pull ]                    # 평소 up에는 끼지 않음
+    depends_on: [ ollama ]
+    environment: { OLLAMA_HOST: "ollama:11434" }
+    entrypoint: [ "sh", "-c", "ollama pull qwen3:4b && ollama pull qwen3:1.7b && ollama pull bge-m3" ]
+    volumes: [ "ollama:/root/.ollama" ]
+volumes:
+  ollama: { external: true, name: free_pkg_ollama }            # 원본이 받아 둔 qwen3 모델을 같이 씀

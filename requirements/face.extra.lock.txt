@@ -1,0 +1,12 @@
+# face 컨테이너 추가분 (11/16): 본인 확인 모델 InsightFace buffalo_l. face.lock.txt 다음에 `pip install --no-deps -r`로 설치한다.
+# --no-deps 이유: insightface가 opencv-python(5.x)을 끌고 와 고정된 opencv-contrib-python-headless(4.14)의 cv2를 덮어쓰기 때문.
+# face.lock.txt와 함께 설치해 기존 고정 버전이 바뀌지 않는 것을 확인함 (pip --dry-run, 11/16). onnxruntime은 face.lock.txt의 1.31.1을 그대로 씀
+insightface==2.1
+onnx==1.23.2
+scikit-image==0.26.0     # insightface 얼굴 정렬(face_align)
+scipy==1.18.1            # scikit-image 의존
+imageio==2.38.1          # scikit-image 의존
+lazy-loader==0.6         # scikit-image 의존
+networkx==3.7            # scikit-image 의존
+pillow==13.0.0           # scikit-image 의존
+tifffile==2026.11.12     # scikit-image 의존

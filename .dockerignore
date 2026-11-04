@@ -1,0 +1,5 @@
+.env
+.git
+web/node_modules
+web/.next
+web/.build

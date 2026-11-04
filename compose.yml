@@ -1,0 +1,138 @@
+# 개발용 실행 환경 (stub 모드, GPU 없이). GPU 서버에서는 compose.ollama.yml을 합쳐 쓴다:
+#   docker compose -f compose.yml -f compose.ollama.yml up -d
+services:
+  postgres:
+    restart: unless-stopped        # PC·Docker가 다시 켜지면 자동으로 다시 시작 (11/10: 재부팅 뒤 전부 꺼져 프록시 오류)
+    image: pgvector/pgvector:0.8.7-pg17
+    command: postgres -c max_connections=500   # 동시 접속 50명+ (11/10): api 4×(80+10) + worker (60+10) = 430 + 여유
+    environment:
+      POSTGRES_USER: recruit
+      POSTGRES_DB: recruit
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./db:/work/db:ro          # tasks.ps1 seed가 psql -f로 읽음
+      - ./seed:/work/seed:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U recruit -d recruit"]
+      interval: 2s
+      retries: 30
+    # 외부에 포트 열지 않음 (NFR: DB는 내부망)
+
+  redis:
+    restart: unless-stopped        # PC·Docker가 다시 켜지면 자동으로 다시 시작 (11/10: 재부팅 뒤 전부 꺼져 프록시 오류)
+    image: redis:8.2
+
+  api:
+    restart: unless-stopped        # PC·Docker가 다시 켜지면 자동으로 다시 시작 (11/10: 재부팅 뒤 전부 꺼져 프록시 오류)
+    build: { context: ., dockerfile: api/Dockerfile }
+    env_file: .env
+    volumes: [ "./:/app", "audio:/audio", "photos:/photos" ]   # 개발 중 코드 바로 반영 / 답변 음성 임시 위치(STT 뒤 삭제) / 지원서 증명사진
+    networks: [ default, judge ]
+    # 동시 접속 50명+ (11/10): 작업 프로세스 4개. 코드를 고치면 devserve.py가 프로세스를 하나씩 새 코드로 바꿔 준다 (끊김 없음)
+    command: python scripts/devserve.py api -- uvicorn api.main:app --host 0.0.0.0 --port 8000 --workers 4 --timeout-worker-healthcheck 30
+    environment: { DB_POOL_MAX: "80", CKPT_POOL_MAX: "10" }   # 요청 스레드 40 + 그래프 실행 8 × 4 = 72 ≤ 80 → 풀끼리 막히지 않음 (api/graph/checkpoint.py)
+    ports: [ "127.0.0.1:8000:8000" ]
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_started }
+
+  worker:                        # STT·판정·다음 질문·최종 평가 (api와 같은 이미지·같은 MODULE_MODE)
+    restart: unless-stopped        # PC·Docker가 다시 켜지면 자동으로 다시 시작 (11/10: 재부팅 뒤 전부 꺼져 프록시 오류)
+    build: { context: ., dockerfile: api/Dockerfile }
+    env_file: .env
+    volumes: [ "./:/app", "audio:/audio", "photos:/photos" ]
+    networks: [ default, judge ]
+    # LLM·STT 기다림이 대부분이라 CPU 수보다 넉넉히 (11/10). 코드를 고치면 devserve.py가 새 worker를 띄우고 옛 worker는 하던 일을 끝내고 내린다
+    # 스레드 16개 (11/10): 프로세스 16개는 형태소 분석기·모델 연결을 프로세스마다 따로 올려 메모리 6GB → 프로세스 하나에 같이 씀
+    command: python scripts/devserve.py worker -- celery -A worker.app worker -B -s /tmp/celerybeat-schedule --loglevel=info --pool=threads --concurrency=16
+    environment: { DB_POOL_MAX: "60", CKPT_POOL_MAX: "10" }   # 스레드 16 + 그래프 실행 8 × 4 = 48 ≤ 60
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_started }
+
+  web:                           # Next.js 화면 (개발 서버). /api는 api 컨테이너로 넘긴다 (web/next.config.ts)
+    restart: unless-stopped        # PC·Docker가 다시 켜지면 자동으로 다시 시작 (11/10: 재부팅 뒤 전부 꺼져 프록시 오류)
+                                 # Windows Docker는 파일 변경을 컨테이너에 못 전해서, 화면 코드를 고친 뒤에는 docker compose restart web
+    image: node:24-slim
+    working_dir: /web
+    environment: { API_URL: "http://api:8000", NEXT_TELEMETRY_DISABLED: "1" }
+    volumes:
+      - ./web:/web
+      - web_modules:/web/node_modules   # Windows에서 설치한 node_modules와 섞이지 않게 컨테이너 전용
+      - web_next:/web/.build   # 운영 빌드 결과 (.build/a·b)
+      - web_dev:/web/.next     # 개발 서버(E2E) 결과
+    # 동시 접속 50명+ (11/10): 개발 서버(next dev, 100명에 평균 2.6초) 대신 운영 서버(0.2초). 화면 코드를 고치면 serve.mjs가
+    # 뒤에서 다시 빌드해 끊김 없이 바꿔 준다 (1~2분 뒤 반영, 손으로 다시 시작할 필요 없음. 빌드가 실패하면 옛 화면 유지)
+    command: node scripts/serve.mjs   # 패키지 설치는 serve.mjs가 lock이 바뀌었을 때만 (11/11: Docker 재시작 뒤 접속까지 2~3분 → 몇 초)
+    ports: [ "127.0.0.1:3000:3000" ]
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/login').then(r => process.exit(r.ok ? 0 : 1), () => process.exit(1))"]
+      interval: 5s
+      retries: 60
+    depends_on: [ api ]
+
+  judge:                         # 코딩 테스트 채점 실행기 (judge/server.py). 지원자 코드는 여기서만 돈다 (NFR-CT-01)
+    restart: unless-stopped        # PC·Docker가 다시 켜지면 자동으로 다시 시작 (11/10: 재부팅 뒤 전부 꺼져 프록시 오류)
+    build: { context: ., dockerfile: judge/Dockerfile }
+    networks: [ judge ]            # 바깥으로 나가는 길 없음 (internal 네트워크, api·worker만 들어옴)
+    read_only: true
+    tmpfs: [ "/tmp:size=128m" ]
+    mem_limit: 1g
+    cpus: 2
+    pids_limit: 256
+    cap_drop: [ ALL ]
+    security_opt: [ "no-new-privileges:true" ]
+
+  stt:                           # 답변 음성 → 글 (faster-whisper large-v3-turbo, GPU). 큐 'stt'에서 worker 작업을 받는다
+    restart: unless-stopped        # PC·Docker가 다시 켜지면 자동으로 다시 시작 (11/10: 재부팅 뒤 전부 꺼져 프록시 오류)
+    build: { context: ., dockerfile: stt/Dockerfile }
+    profiles: [ voice ]            # .env의 COMPOSE_PROFILES=voice일 때만 (GPU 없는 노트북은 STT_MODE=stub로 끄고 씀)
+    environment: { REDIS_URL: "redis://redis:6379/0", AUDIO_DIR: /audio }   # .env는 넣지 않는다 (키가 필요 없음)
+    volumes: [ "audio:/audio:ro", "stt_models:/models" ]   # 음성은 읽기만 (지우는 건 worker) / 모델은 처음 한 번 내려받아 둠
+    deploy:
+      resources:
+        reservations:
+          devices: [ { driver: nvidia, count: 1, capabilities: [ gpu ] } ]
+    depends_on: [ redis ]
+
+  tts:                           # 면접관 음성 (Supertonic 1.3.1, CPU). api·worker만 부른다 (외부에 포트 안 엶)
+    restart: unless-stopped        # PC·Docker가 다시 켜지면 자동으로 다시 시작 (11/10: 재부팅 뒤 전부 꺼져 프록시 오류)
+    build: { context: ., dockerfile: tts/Dockerfile }
+    profiles: [ voice ]
+    volumes: [ "tts_models:/models" ]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=120)"]
+      interval: 10s
+      retries: 30
+
+  face:                          # 얼굴 대조 InsightFace buffalo_l (CPU, 11/16 ArcFace에서 교체). 큐 'face'. 사진은 읽기만, 프레임은 저장하지 않음
+    build: { context: ., dockerfile: face/Dockerfile }
+    restart: unless-stopped        # PC·Docker가 다시 켜지면 자동으로 다시 시작 (11/10: 재부팅 뒤 전부 꺼져 프록시 오류)
+    environment: { REDIS_URL: "redis://redis:6379/0", PHOTO_DIR: /photos }
+    volumes: [ "photos:/photos:ro", "face_models:/models" ]
+    depends_on: [ redis ]
+
+  nli:                           # CE(질문·답변 관련성)·NLI(꼬리질문 모순) 판정 (CPU). api·worker만 부른다 (외부에 포트 안 엶). 11/9 추가
+    restart: unless-stopped        # PC·Docker가 다시 켜지면 자동으로 다시 시작 (11/10: 재부팅 뒤 전부 꺼져 프록시 오류)
+    build: { context: ., dockerfile: nli/Dockerfile }
+    volumes: [ "hf_models:/models" ]   # HuggingFace 모델은 처음 한 번 내려받아 둠 (bge-reranker-v2-m3 약 2.3GB, mDeBERTa 약 1.1GB)
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=10)"]
+      interval: 10s
+      retries: 120
+
+networks:
+  judge: { internal: true }
+
+volumes:
+  pgdata: {}
+  audio: {}
+  stt_models: { external: true, name: free_pkg_stt_models }   # 원본(free_pkg)이 받아 둔 모델을 같이 씀 (다시 내려받지 않게)
+  tts_models: { external: true, name: free_pkg_tts_models }
+  hf_models: {}
+  photos: {}         # 지원서 증명사진 (얼굴 대조 기준)
+  face_models: {}    # ArcFace 가중치
+  web_modules: {}
+  web_next: {}
+  web_dev: {}

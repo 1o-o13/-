@@ -1,0 +1,27 @@
+# 비밀값: API 키·로그인 앱 키·DB 비밀번호는 .env에만 두고 저장소에 올리지 않는다 (.env.example은 빈 칸 견본이라 올린다)
+.env
+.env.*
+!.env.example
+
+# 만들어지는 것·내려받은 것
+__pycache__/
+*.pyc
+.pytest_cache/
+web/node_modules/
+web/.next/
+web/test-results/
+web/playwright-report/
+
+# STT 비교 녹음 (개인 목소리) · 모델 결과
+bench/data/mine/
+bench/out/
+
+bench/data/style/
+bench/data/face/
+bench/data/lfw/
+
+# 본인 얼굴 사진 (표정·얼굴 비교 기준) · 모델 비교 때 만든 음성 (용량이 큼, scripts로 다시 만들 수 있음)
+bench/data/face_ref.jpg
+bench/data/tts_*/
+records/.logs/
+docs/최종/.*.html
