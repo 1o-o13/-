@@ -1,0 +1,32 @@
+백엔드 서버 본체 (FastAPI). 화면(web)이 부르는 모든 API가 여기 있음
+실행: docker compose의 api 컨테이너 (worker도 같은 코드를 씀)
+
+main.py          앱 시작점. 라우터 등록 + 시작할 때 .env의 LLM 설정이 틀리면 바로 멈춤
+auth.py          로그인·회원가입 (임시, 공통 기반 파트가 정식 버전 주면 교체)
+social.py        네이버·구글·카카오 간편 로그인 (임시)
+db.py            PostgreSQL 연결 (연결 풀 사용, 동시 50명 이상 대비)
+llm_gate.py      모든 LLM 호출이 반드시 지나가는 관문 (개인정보 가리기, 모델 고르기, 30초/60초 규칙)
+prompt.py        프롬프트 조립. 글은 prompts/*.md에 있고 {{변수}}에 값을 끼움
+modules.py       가짜 모듈(stub)과 진짜 모듈(real) 중 무엇을 쓸지 고르는 곳 (.env의 MODULE_MODE)
+real_modules.py  진짜 질문 생성·판정·평가 (LLM 사용)
+retrieve.py      회사 문서 검색(RAG): 키워드 검색 + 벡터 검색을 섞어서 근거 찾기
+pregen.py        질문 은행에서 지원자별 질문을 미리 만들어 둠
+screen.py        1차 서류 AI 검토 (점수 없이 라벨·근거·추천만)
+stage.py         지원 건 진행 단계 11종
+face.py          얼굴 대조 호출 (face 컨테이너로 보냄)
+nli_client.py    nli 컨테이너 호출 (답변이 질문과 맞는지, 모순인지)
+notify.py        메일·문자 알림 (결과 내용은 안 보내고 "확인하세요" 링크만)
+retention.py     면접 기록 보관 기간 (최종 발표 후 180일 뒤 파기)
+site.py          로그인 없이 보는 채용 사이트 정보·지원서 제출
+
+폴더
+  admin/      관리자 기능 (공고 관리, 서류 결정·발표, 면접 결과 확정)
+  coding/     코딩 테스트 (문제 준비, 채점, 규칙)
+  graph/      LangGraph 흐름 (지원 건 1개 = 흐름 1개, 면접 진행 그래프)
+  interview/  면접 진행 (다음 질문 결정, DB 저장, 질문 음성, 문의 챗봇, 연습 면접)
+  prompts/    LLM에 보내는 프롬프트 글 (.md)
+
+test_*.py, conftest.py   이 폴더 기능 시험 (pytest). 임시 DB를 따로 만들어서 개발 DB와 안 섞임
+__pycache__/             파이썬이 자동으로 만드는 캐시 (지워도 됨, 다시 생김)
+
+지워도 되나: 안 됨 (서비스 핵심 코드)
