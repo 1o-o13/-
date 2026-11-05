@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/* 가상 회사 '새벽소프트' 채용 사이트. 남색(새벽 하늘) + 주황(해 뜨는 빛) */
+@theme {
+  --color-brand-50: #f1f0fe;
+  --color-brand-100: #e4e2fd;
+  --color-brand-600: #7570f2;
+  --color-brand-700: #5f59e0;
+  --color-brand-900: #2a2857;
+  /* 부드러운 느낌 (11/17): 회색 선·바탕에 보랏빛을 살짝 섞고, 모서리는 더 둥글게, 그림자는 옅고 넓게 */
+  --color-slate-50: #f8f7fc;
+  --color-slate-100: #f1f0f8;
+  --color-slate-200: #e9e7f3;
+  --color-slate-300: #dcd9ea;
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 0.875rem;
+  --radius-xl: 1.125rem;
+  --radius-2xl: 1.5rem;
+  --shadow-sm: 0 1px 2px rgba(80, 72, 160, 0.04), 0 6px 20px rgba(80, 72, 160, 0.06);
+  --shadow-md: 0 2px 4px rgba(80, 72, 160, 0.05), 0 10px 28px rgba(80, 72, 160, 0.09);
+  --shadow-lg: 0 4px 8px rgba(80, 72, 160, 0.06), 0 18px 44px rgba(80, 72, 160, 0.12);
+  --color-dawn-400: #fb923c;
+  --color-dawn-500: #f97316;
+  /* 면접실(CAN-012): 어두운 방 */
+  --color-room: #121521;
+  --color-room-2: #1b2030;
+  --color-room-3: #262c40;
+  --color-room-fg: #e8eaf3;
+  --color-room-muted: #9198b0;
+  --color-avatar: #7f8ff0;
+}
+
+@keyframes orb-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(127, 143, 240, 0.45); }
+  70% { box-shadow: 0 0 0 26px rgba(127, 143, 240, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(127, 143, 240, 0); }
+}
+
+/* 공통 모양은 components 층에: 화면마다 붙인 색·크기 클래스(utilities)가 이긴다 */
+@layer components {
+  body { @apply bg-slate-50 text-slate-800 break-keep; letter-spacing: -0.01em; } /* 한국어는 낱말 중간에서 줄바꿈하지 않게 */
+  .btn { @apply inline-flex items-center justify-center rounded-full bg-brand-700 px-5 py-2 font-medium text-white shadow-sm transition duration-150 hover:bg-brand-600 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none; }
+  .btn-line { @apply inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-5 py-2 transition duration-150 hover:border-brand-100 hover:bg-brand-50 active:scale-[0.98] disabled:text-slate-400; }
+  .input { @apply w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2 transition duration-150 focus:border-brand-600 focus:outline-none focus:ring-4 focus:ring-brand-100 disabled:bg-slate-100; }
+  .card { @apply rounded-2xl border border-slate-200 bg-white p-5 shadow-sm; }
+  table.card :where(th, td) { padding: 0.5rem 0.5rem; }                         /* 표가 빽빽하지 않게 */
+  table.card tbody tr { @apply transition-colors duration-150 hover:bg-brand-50/40; }
+  .err { @apply text-sm text-red-600; }
+  .orb { @apply h-32 w-32 rounded-full; background: radial-gradient(circle at 35% 35%, #b6c0ff, var(--color-avatar) 55%, #3c4aa6); }
+  .orb.talk { animation: orb-pulse 1.2s ease-in-out infinite; }
+  .tile { @apply relative overflow-hidden rounded-xl border border-room-3 bg-room-2; }
+  .pill { @apply rounded-full bg-room-3 px-3 py-1 text-sm; }
+  .badge { @apply inline-block rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700; }
+}
+
+/* 층 밖에 둠: Tailwind의 기본 'rounded'(4px)를 조금 더 둥글게 (화면마다 쓴 51곳을 한 번에) */
+.rounded { border-radius: 0.5rem; }
+
+html { scroll-behavior: smooth; scroll-padding-top: 4.5rem; }   /* 머리글이 위에 붙어 있어 #메뉴로 갈 때 제목이 가려지지 않게 */

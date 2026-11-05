@@ -1,0 +1,21 @@
+화면 (Next.js 16 + React). 지원자 화면과 관리자 화면 모두 여기
+
+app/            화면 페이지
+  (site)/       채용 홈, 공고, 로그인, 회원가입, 내 정보
+  interview/    면접 화면 순서: guide(안내) → precheck(사전 점검) → coding(코딩) → ready → live(면접) → done(완료)
+  admin/        관리자: 지원자, 공고, 서류, 코딩, 면접, 최종 결정, 사용자
+  dev/          개발용 카메라 점검 화면
+  mediapipe/    얼굴 감지 모델 관련
+lib/            화면 공용 코드 (API 호출, 타이머, 침묵 감지, 감독, 얼굴, 라이브니스 등)
+                *.test.ts = 그 파일의 시험 (vitest)
+e2e/            실제 브라우저로 처음부터 끝까지 눌러 보는 시험 (Playwright)
+public/         정적 파일 (얼굴 모델 파일)
+scripts/        화면 캡처·PDF 만들기 등 보조 스크립트
+package.json    화면 패키지 목록 (버전 고정, 바꾸지 말 것)
+
+자동으로 생기는 것 (지워도 됨, 다시 생김)
+  node_modules/        npm install로 받은 패키지 (지우면 npm install을 다시 해야 함)
+  test-results/        Playwright 시험 결과
+  tsconfig.tsbuildinfo TypeScript 빌드 캐시
+
+지워도 되나: 위 자동 생성물 말고는 안 됨
