@@ -1,0 +1,7 @@
+TTS 컨테이너: 면접관 질문을 음성으로 읽어 줌 (Supertonic 1.3.1, CPU)
+
+app.py       POST /speak 로 글을 받아 한국어 WAV를 돌려줌. api만 부름
+Dockerfile   이 컨테이너 이미지를 만드는 설정
+
+.env의 TTS_MODE=real 일 때만 사용
+지워도 되나: 안 됨

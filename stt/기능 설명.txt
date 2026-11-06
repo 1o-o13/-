@@ -1,0 +1,7 @@
+STT 컨테이너: 답변 음성을 한국어 글로 바꿈 (faster-whisper large-v3-turbo, GPU)
+
+app.py       Redis 큐 'stt'에서 일을 받아 처리
+Dockerfile   이 컨테이너 이미지를 만드는 설정
+
+.env의 STT_MODE=real 일 때만 사용 (stub이면 가짜 글을 씀)
+지워도 되나: 안 됨
