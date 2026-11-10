@@ -1,0 +1,7 @@
+# 부하 시험 전용 (scripts/load_test.py): api·worker를 가짜 모듈·가짜 음성·가짜 얼굴로 띄운다 (LLM 비용 없이 서버 처리량만 잼)
+#   docker compose -f compose.yml -f compose.ollama.yml -f compose.loadtest.yml up -d api worker  → 시험 → docker compose up -d api worker
+services:
+  api:
+    environment: { MODULE_MODE: stub, STT_MODE: stub, TTS_MODE: stub, FACE_MODE: stub, STT_REVIEW_SEC: "0" }   # 부하 시험: 인식 글 확인 단계 없이
+  worker:
+    environment: { MODULE_MODE: stub, STT_MODE: stub, TTS_MODE: stub, FACE_MODE: stub, STT_REVIEW_SEC: "0" }   # 부하 시험: 인식 글 확인 단계 없이
