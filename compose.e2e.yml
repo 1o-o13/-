@@ -1,0 +1,9 @@
+# E2E 전용 (tasks.ps1 e2e): 웹을 개발 서버로 띄운다. 시험용 가짜 얼굴(window.__E2E_FAKE_FACE__)은 개발 서버에서만 통하게 막아 둠 (web/lib/face.ts)
+services:
+  web:
+    command: sh -c "npm ci --no-audit --no-fund && npx next dev -H 0.0.0.0"
+  # 가짜 카메라 영상에는 얼굴이 없어 실제 대조(ArcFace)를 통과할 수 없다 → 시험 동안만 가짜 대조 (끝나면 tasks.ps1이 되돌림)
+  api:
+    environment: { FACE_MODE: stub }
+  worker:
+    environment: { FACE_MODE: stub }
