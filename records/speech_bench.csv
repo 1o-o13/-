@@ -1,0 +1,39 @@
+date,kind,model,detail,set,n,cer,cer_raw,wer,term_rate,rtf,avg_sec,hallucinated,load_sec,gpu_mb,note
+2026-11-12,stt,faster-whisper large-v3-turbo,cuda int8_float16,tts_supertonic-3,80,0.0501,0.0749,0.1281,0.851,0.177,1.55,,9.0,1349,기준(지금 서비스)
+2026-11-12,tts,supertonic-3,왕복: faster-whisper large-v3-turbo,고정 문장,80,0.0501,0.0749,0.1281,0.851,0.384,3.35,,,,기준(지금 서비스)
+2026-11-12,stt,faster-whisper large-v3-turbo,cuda int8_float16,silence,3,,,,,0.005,0.05,0,9.0,1349,기준(지금 서비스)
+2026-11-12,stt,faster-whisper large-v3-turbo,cuda int8_float16,mine,20,0.0738,0.0828,0.1873,0.786,0.493,4.92,,13.4,122,기준(지금 서비스) · 내 목소리 20개. t12 끝 무음에 "한글자막 by 한효정" 환각 1건. E2E와 GPU를 같이 써서 속도·메모리는 참고
+2026-11-12,stt,faster-whisper large-v3-turbo,cuda int8_float16,mine,20,0.0738,0.0828,0.1873,0.786,0.167,1.66,,17.9,1293,기준 다시 (GPU 단독)
+2026-11-12,stt,faster-whisper large-v3-turbo,cuda int8_float16,tts_supertonic-3,80,0.0501,0.0749,0.1281,0.851,0.202,1.76,,17.9,1312,기준 다시 (GPU 단독)
+2026-11-12,tts,supertonic-3,왕복: faster-whisper large-v3-turbo,고정 문장,80,0.0501,0.0749,0.1281,0.851,0.384,3.35,,,,기준 다시 (GPU 단독)
+2026-11-12,stt,faster-whisper large-v3-turbo,cuda int8_float16,silence,3,,,,,0.008,0.08,0,17.9,1312,기준 다시 (GPU 단독)
+2026-11-12,stt,faster-whisper large-v3,cuda int8_float16,mine,20,0.094,0.0984,0.2014,0.857,0.443,4.42,,124.5,2266,후보 1단계
+2026-11-12,stt,faster-whisper large-v3,cuda int8_float16,tts_supertonic-3,80,0.0428,0.0484,0.0989,0.863,0.41,3.58,,124.5,2294,후보 1단계
+2026-11-12,stt,faster-whisper large-v3,cuda int8_float16,silence,3,,,,,0.006,0.06,0,124.5,2294,후보 1단계
+2026-11-12,stt,moonshine moonshine-ai/moonshine-base-ko,cuda fp32,mine,20,0.4899,0.5056,0.5548,0.476,0.305,3.04,,31.3,411,후보 2단계
+2026-11-12,stt,moonshine moonshine-ai/moonshine-base-ko,cuda fp32,tts_supertonic-3,80,0.4667,0.4678,0.5186,0.5,0.362,3.16,,31.3,418,후보 2단계
+2026-11-12,stt,moonshine moonshine-ai/moonshine-base-ko,cuda fp32,silence,3,,,,,0.139,1.39,2,31.3,418,후보 2단계
+2026-11-12,stt,qwen-asr Qwen/Qwen3-ASR-0.6B,cuda fp16,mine,20,0.0515,0.0638,0.1625,0.833,0.954,9.51,,82.2,1977,후보 2단계
+2026-11-12,stt,qwen-asr Qwen/Qwen3-ASR-0.6B,cuda fp16,tts_supertonic-3,80,0.0523,0.0682,0.1272,0.815,0.956,8.34,,82.2,2014,후보 2단계
+2026-11-12,stt,qwen-asr Qwen/Qwen3-ASR-0.6B,cuda fp16,silence,3,,,,,0.084,0.84,2,82.2,2014,후보 2단계
+2026-11-12,stt,qwen-asr Qwen/Qwen3-ASR-1.7B,cuda fp16,mine,20,0.0425,0.0425,0.1378,0.833,0.593,5.91,,135.7,4679,후보 2단계
+2026-11-12,stt,qwen-asr Qwen/Qwen3-ASR-1.7B,cuda fp16,tts_supertonic-3,80,0.0305,0.0322,0.0813,0.946,0.698,6.09,,135.7,4694,후보 2단계
+2026-11-12,stt,qwen-asr Qwen/Qwen3-ASR-1.7B,cuda fp16,silence,3,,,,,0.201,2.01,3,135.7,4694,후보 2단계
+2026-11-12,stt,sensevoice FunAudioLLM/SenseVoiceSmall,cuda fp32,mine,20,0.1018,0.1029,0.629,0.643,0.029,0.29,,45.6,1089,후보 2단계
+2026-11-12,stt,sensevoice FunAudioLLM/SenseVoiceSmall,cuda fp32,tts_supertonic-3,80,0.0853,0.09,0.553,0.661,0.033,0.29,,45.6,1171,후보 2단계
+2026-11-12,stt,sensevoice FunAudioLLM/SenseVoiceSmall,cuda fp32,silence,3,,,,,0.014,0.14,0,45.6,1171,후보 2단계
+2026-11-12,stt,faster-whisper large-v3-turbo,cuda int8_float16,tts_melotts-kr,20,0.0559,0.0694,0.1343,0.762,0.178,1.56,,5.4,1261,TTS 후보 왕복
+2026-11-12,tts,melotts-kr,왕복: faster-whisper large-v3-turbo,고정 문장,20,0.0559,0.0694,0.1343,0.762,0.078,0.68,,,,TTS 후보 왕복
+2026-11-12,stt,moonshine moonshine-ai/moonshine-base-ko,cuda fp32,mine,20,0.1879,0.2036,0.311,0.643,0.336,3.35,,11.2,408,후보 2단계 (설정 고쳐 다시)
+2026-11-12,stt,moonshine moonshine-ai/moonshine-base-ko,cuda fp32,tts_supertonic-3,80,0.064,0.0652,0.1634,0.744,0.497,4.34,,11.2,440,후보 2단계 (설정 고쳐 다시)
+2026-11-12,stt,moonshine moonshine-ai/moonshine-base-ko,cuda fp32,silence,3,,,,,0.301,3.01,2,11.2,440,후보 2단계 (설정 고쳐 다시)
+2026-11-12,stt,hf-whisper ghost613/whisper-large-v3-turbo-korean,cuda fp16,mine,20,0.2349,0.2394,0.4205,0.452,0.486,4.85,,16.4,1935,후보 2단계 (설정 고쳐 다시)
+2026-11-12,stt,hf-whisper ghost613/whisper-large-v3-turbo-korean,cuda fp16,tts_supertonic-3,80,0.1398,0.1432,0.2818,0.554,0.566,4.94,,16.4,1937,후보 2단계 (설정 고쳐 다시)
+2026-11-12,stt,hf-whisper ghost613/whisper-large-v3-turbo-korean,cuda fp16,silence,3,,,,,0.551,5.51,3,16.4,1937,후보 2단계 (설정 고쳐 다시)
+2026-11-12,stt,faster-whisper large-v3-turbo,cuda int8_float16,tts_qwen3-tts-0.6b,20,0.0503,0.0503,0.1025,0.786,0.162,1.65,,5.6,1267,TTS 후보 왕복
+2026-11-12,tts,qwen3-tts-0.6b,왕복: faster-whisper large-v3-turbo,고정 문장,20,0.0503,0.0503,0.1025,0.786,3.583,36.48,,,,TTS 후보 왕복
+2026-11-12,stt,faster-whisper large-v3-turbo,cuda int8_float16,tts_cosyvoice2-0.5b,40,0.0548,0.0548,0.1237,0.774,0.164,1.67,,5.7,1249,TTS 후보 왕복
+2026-11-12,tts,cosyvoice2-0.5b,왕복: faster-whisper large-v3-turbo,고정 문장,40,0.0548,0.0548,0.1237,0.774,1.354,13.73,,,,TTS 후보 왕복
+2026-11-12,stt,faster-whisper-hint large-v3-turbo,cuda int8_float16 + 용어 힌트·환각 거르기,mine,20,0.0582,0.1063,0.1661,0.905,0.202,2.01,,14.1,1281,지금 모델 보완 시험
+2026-11-12,stt,faster-whisper-hint large-v3-turbo,cuda int8_float16 + 용어 힌트·환각 거르기,tts_supertonic-3,80,0.0442,0.1035,0.1201,0.887,0.184,1.61,,14.1,1284,지금 모델 보완 시험
+2026-11-12,stt,faster-whisper-hint large-v3-turbo,cuda int8_float16 + 용어 힌트·환각 거르기,silence,3,,,,,0.005,0.05,0,14.1,1284,지금 모델 보완 시험

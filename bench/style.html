@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>말투 녹음</title>
+<style>
+  body { font-family: "Malgun Gothic", sans-serif; background: #f6f7f9; color: #1d2330; margin: 0; }
+  main { max-width: 780px; margin: 32px auto; padding: 0 16px; }
+  h1 { font-size: 22px; margin: 0 0 4px; } .sub { color: #5b6475; font-size: 14px; margin-bottom: 18px; line-height: 1.6; }
+  .card { background: #fff; border: 1px solid #dfe3ea; border-radius: 12px; padding: 24px; }
+  .style { display: inline-block; font-size: 15px; font-weight: 700; color: #fff; background: #2457d6; border-radius: 6px; padding: 4px 10px; }
+  .hint { color: #b0322a; font-weight: 600; margin: 8px 0; } .text { font-size: 21px; line-height: 1.6; margin: 10px 0 18px; }
+  button { font: inherit; font-size: 15px; padding: 10px 18px; border-radius: 8px; border: 1px solid #c6ccd6; background: #fff; cursor: pointer; }
+  button.main { background: #2457d6; border-color: #2457d6; color: #fff; } button.rec { background: #d6342c; border-color: #d6342c; color: #fff; }
+  button:disabled { opacity: .45; cursor: default; } .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .state { margin-left: auto; font-size: 14px; color: #5b6475; } .list { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; margin-top: 18px; }
+  .list span { font-size: 12px; padding: 4px 6px; border-radius: 6px; background: #e8ebf0; cursor: pointer; text-align: center; }
+  .list span.done { background: #d9f0df; color: #1c6b34; } .list span.cur { outline: 2px solid #2457d6; }
+</style>
+</head>
+<body>
+<main>
+  <h1>말투 녹음 (목소리 톤 모델 비교용)</h1>
+  <div class="sub">같은 문장 5개를 말투 5가지로 읽습니다 (25번). <b>빨간 안내대로 연기하듯</b> 읽어 주세요.
+    마이크 자동 음량 조절을 끄고 녹음해서 '작게'가 그대로 작게 남습니다. 녹음은 이 PC의 bench/data/style에만 저장됩니다.</div>
+  <div class="card">
+    <span class="style" id="style"></span> <span id="num" style="color:#5b6475;font-size:13px"></span>
+    <div class="hint" id="hint"></div>
+    <div class="text" id="text">불러오는 중…</div>
+    <div class="row">
+      <button class="main" id="rec">● 녹음 시작</button>
+      <button id="play" disabled>▶ 들어 보기</button>
+      <button id="save" disabled>저장하고 다음</button>
+      <span class="state" id="state"></span>
+    </div>
+    <div class="list" id="list"></div>
+  </div>
+</main>
+<script>
+let items = [], idx = 0, rec = null, chunks = [], wav = null, stream = null;
+const $ = (id) => document.getElementById(id);
+async function load() { items = await (await fetch("/style/items")).json(); const f = items.findIndex((x) => !x.done); show(f < 0 ? 0 : f); }
+function show(i) {
+  idx = i; wav = null; const it = items[i];
+  $("style").textContent = it.label; $("hint").textContent = it.hint; $("text").textContent = it.text;
+  $("num").textContent = `${i + 1} / ${items.length}` + (it.done ? " · 저장됨" : "");
+  $("play").disabled = true; $("save").disabled = true; $("state").textContent = "";
+  $("list").innerHTML = items.map((x, k) => `<span class="${x.done ? "done" : ""} ${k === i ? "cur" : ""}" data-k="${k}">${x.label}·${x.id}</span>`).join("");
+  $("list").querySelectorAll("span").forEach((s) => (s.onclick = () => show(+s.dataset.k)));
+}
+async function toWav(blob) {
+  const ctx = new AudioContext(); const buf = await ctx.decodeAudioData(await blob.arrayBuffer());
+  const off = new OfflineAudioContext(1, Math.ceil(buf.duration * 16000), 16000);
+  const src = off.createBufferSource(); src.buffer = buf; src.connect(off.destination); src.start();
+  const pcm = (await off.startRendering()).getChannelData(0);
+  const out = new DataView(new ArrayBuffer(44 + pcm.length * 2)); const str = (o, s) => [...s].forEach((c, k) => out.setUint8(o + k, c.charCodeAt(0)));
+  str(0, "RIFF"); out.setUint32(4, 36 + pcm.length * 2, true); str(8, "WAVE"); str(12, "fmt "); out.setUint32(16, 16, true); out.setUint16(20, 1, true);
+  out.setUint16(22, 1, true); out.setUint32(24, 16000, true); out.setUint32(28, 32000, true); out.setUint16(32, 2, true); out.setUint16(34, 16, true);
+  str(36, "data"); out.setUint32(40, pcm.length * 2, true); pcm.forEach((v, k) => out.setInt16(44 + k * 2, Math.max(-1, Math.min(1, v)) * 32767, true));
+  ctx.close(); return new Blob([out], { type: "audio/wav" });
+}
+$("rec").onclick = async () => {
+  if (rec) { rec.stop(); return; }
+  stream = stream || await navigator.mediaDevices.getUserMedia({ audio: { autoGainControl: false, noiseSuppression: false, echoCancellation: false } });
+  chunks = []; rec = new MediaRecorder(stream); rec.ondataavailable = (e) => chunks.push(e.data);
+  rec.onstop = async () => { rec = null; $("rec").textContent = "● 다시 녹음"; $("rec").className = "main"; wav = await toWav(new Blob(chunks));
+    $("play").disabled = false; $("save").disabled = false; $("state").textContent = "녹음됨 — 들어 보고 저장하세요"; };
+  rec.start(); $("rec").textContent = "■ 녹음 끝"; $("rec").className = "rec"; $("state").textContent = "녹음 중…"; $("play").disabled = true; $("save").disabled = true;
+};
+$("play").onclick = () => wav && new Audio(URL.createObjectURL(wav)).play();
+$("save").onclick = async () => {
+  const it = items[idx]; const r = await fetch(`/save-style/${it.style}/${it.id}`, { method: "POST", body: wav });
+  if (!r.ok) { $("state").textContent = "저장 실패"; return; }
+  it.done = true; const next = items.findIndex((x) => !x.done);
+  if (next < 0) { show(idx); $("state").textContent = "25개 모두 저장했습니다. 고맙습니다!"; return; }
+  show(next);
+};
+load();
+</script>
+</body>
+</html>

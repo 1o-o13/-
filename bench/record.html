@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>STT 비교 녹음</title>
+<style>
+  body { font-family: "Malgun Gothic", sans-serif; background: #f6f7f9; color: #1d2330; margin: 0; }
+  main { max-width: 760px; margin: 32px auto; padding: 0 16px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: #5b6475; font-size: 14px; margin-bottom: 20px; }
+  .card { background: #fff; border: 1px solid #dfe3ea; border-radius: 12px; padding: 24px; }
+  .num { color: #5b6475; font-size: 13px; }
+  .text { font-size: 22px; line-height: 1.6; margin: 10px 0 20px; min-height: 70px; }
+  button { font: inherit; font-size: 15px; padding: 10px 18px; border-radius: 8px; border: 1px solid #c6ccd6; background: #fff; cursor: pointer; }
+  button.main { background: #2457d6; border-color: #2457d6; color: #fff; }
+  button.rec { background: #d6342c; border-color: #d6342c; color: #fff; }
+  button:disabled { opacity: .45; cursor: default; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .state { margin-left: auto; font-size: 14px; color: #5b6475; }
+  .list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 18px; }
+  .list span { font-size: 12px; padding: 4px 8px; border-radius: 6px; background: #e8ebf0; cursor: pointer; }
+  .list span.done { background: #d9f0df; color: #1c6b34; }
+  .list span.cur { outline: 2px solid #2457d6; }
+  .stt { margin-top: 16px; border-top: 1px dashed #dfe3ea; padding-top: 14px; font-size: 14px; line-height: 1.7; }
+  .stt .lab { color: #5b6475; font-size: 12px; }
+  .stt .hyp { font-size: 17px; }
+  .stt .ok { color: #1c6b34; font-weight: 600; } .stt .bad { color: #b0322a; font-weight: 600; }
+  .tip { font-size: 13px; color: #5b6475; margin-top: 16px; line-height: 1.6; }
+</style>
+</head>
+<body>
+<main>
+  <h1>STT 비교용 내 목소리 녹음</h1>
+  <div class="sub">문장을 평소 면접 답변하듯 읽어 주세요. 녹음은 이 PC의 bench/data/mine에만 저장됩니다.</div>
+  <div class="card">
+    <div class="num" id="num"></div>
+    <div class="text" id="text">불러오는 중…</div>
+    <div class="row">
+      <button class="main" id="rec">● 녹음 시작</button>
+      <button id="play" disabled>▶ 들어 보기</button>
+      <button id="save" disabled>저장하고 다음</button>
+      <span class="state" id="state"></span>
+    </div>
+    <div class="list" id="list"></div>
+    <div class="stt" id="stt" hidden></div>
+  </div>
+  <div class="tip">· 조용한 곳에서, 면접 때 쓰는 마이크로 녹음하면 실제와 가장 비슷합니다.<br>· 틀리게 읽었으면 다시 녹음하면 됩니다. 저장된 문장도 눌러서 다시 녹음할 수 있습니다.<br>· 영어 용어(Redis, JWT 등)는 평소 말하는 대로 읽어 주세요.</div>
+</main>
+<script>
+let items = [], idx = 0, rec = null, chunks = [], wav = null, stream = null;
+const $ = (id) => document.getElementById(id);
+
+async function load() {
+  items = await (await fetch("/sentences")).json();
+  const first = items.findIndex((x) => !x.done);
+  show(first < 0 ? 0 : first);
+}
+function show(i, keep = false) {
+  idx = i; wav = null;
+  $("num").textContent = `${i + 1} / ${items.length} · ${items[i].id}` + (items[i].done ? " · 저장됨" : "");
+  $("text").textContent = items[i].text;
+  $("play").disabled = !items[i].done; $("save").disabled = true; $("state").textContent = "";
+  if (items[i].done && !keep) stt(items[i].id);
+  $("list").innerHTML = items.map((x, k) => `<span class="${x.done ? "done" : ""} ${k === i ? "cur" : ""}" data-k="${k}">${x.id}</span>`).join("");
+  $("list").querySelectorAll("span").forEach((s) => (s.onclick = () => show(+s.dataset.k)));
+}
+
+// 녹음한 소리를 16kHz 모노 WAV로 (STT 모델들이 모두 읽을 수 있게)
+async function toWav(blob) {
+  const ctx = new AudioContext();
+  const buf = await ctx.decodeAudioData(await blob.arrayBuffer());
+  const off = new OfflineAudioContext(1, Math.ceil(buf.duration * 16000), 16000);
+  const src = off.createBufferSource(); src.buffer = buf; src.connect(off.destination); src.start();
+  const pcm = (await off.startRendering()).getChannelData(0);
+  const out = new DataView(new ArrayBuffer(44 + pcm.length * 2));
+  const str = (o, s) => [...s].forEach((c, k) => out.setUint8(o + k, c.charCodeAt(0)));
+  str(0, "RIFF"); out.setUint32(4, 36 + pcm.length * 2, true); str(8, "WAVE"); str(12, "fmt ");
+  out.setUint32(16, 16, true); out.setUint16(20, 1, true); out.setUint16(22, 1, true); out.setUint32(24, 16000, true);
+  out.setUint32(28, 32000, true); out.setUint16(32, 2, true); out.setUint16(34, 16, true); str(36, "data"); out.setUint32(40, pcm.length * 2, true);
+  pcm.forEach((v, k) => out.setInt16(44 + k * 2, Math.max(-1, Math.min(1, v)) * 32767, true));
+  ctx.close();
+  return new Blob([out], { type: "audio/wav" });
+}
+
+$("rec").onclick = async () => {
+  if (rec) { rec.stop(); return; }
+  stream = stream || await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+  chunks = []; rec = new MediaRecorder(stream);
+  rec.ondataavailable = (e) => chunks.push(e.data);
+  rec.onstop = async () => {
+    rec = null; $("rec").textContent = "● 다시 녹음"; $("rec").className = "main";
+    wav = await toWav(new Blob(chunks));
+    $("play").disabled = false; $("save").disabled = false; $("state").textContent = "녹음됨 — 들어 보고 저장하세요";
+  };
+  rec.start(); $("rec").textContent = "■ 녹음 끝"; $("rec").className = "rec"; $("state").textContent = "녹음 중…";
+  $("play").disabled = true; $("save").disabled = true;
+};
+// 저장한 녹음을 STT로 받아 적어 정답과 나란히 보여 준다 (눈으로 확인)
+async function stt(id) {
+  const box = $("stt"); box.hidden = false;
+  box.innerHTML = `<div class="lab">${id} STT 인식 중… (CPU라 몇 초 걸립니다)</div>`;
+  const r = await fetch(`/stt/${id}`).then((x) => x.json()).catch(() => ({ error: "연결 실패" }));
+  if (r.error) { box.innerHTML = `<div class="lab">${id} STT: ${r.error}</div>`; return; }
+  const good = r.cer <= 0.1;
+  box.innerHTML = `<div class="lab">${id} · STT 인식 결과 (${r.sec}초)</div><div class="hyp">${r.text || "(인식된 말 없음)"}</div>`
+    + `<div class="lab" style="margin-top:6px">정답</div><div>${r.ref}</div>`
+    + `<div style="margin-top:6px">글자 오류율 <span class="${good ? "ok" : "bad"}">${(r.cer * 100).toFixed(1)}%</span> · 용어 ${r.terms}`
+    + `${good ? "" : " — 잘못 읽었으면 이 문장을 눌러 다시 녹음하세요"}</div>`;
+}
+$("play").onclick = () => new Audio(wav ? URL.createObjectURL(wav) : `/clip/${items[idx].id}?${Date.now()}`).play();
+$("save").onclick = async () => {
+  const r = await fetch(`/save/${items[idx].id}`, { method: "POST", body: wav });
+  if (!r.ok) { $("state").textContent = "저장 실패"; return; }
+  items[idx].done = true;
+  stt(items[idx].id);
+  const next = items.findIndex((x, k) => k > idx && !x.done);
+  if (next < 0 && items.every((x) => x.done)) { show(idx, true); $("state").textContent = "모두 저장했습니다. 고맙습니다!"; return; }
+  show(next < 0 ? items.findIndex((x) => !x.done) : next, true);
+};
+load();
+</script>
+</body>
+</html>

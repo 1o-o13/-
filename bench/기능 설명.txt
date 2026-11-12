@@ -1,0 +1,17 @@
+모델 비교 실험실 (11/12). 서비스에는 안 쓰이고, 어떤 모델을 고를지 비교할 때만 씀
+
+STT(음성 → 글)   stt_bench.py, stt_live.py, sentences.py(정답 문장)
+TTS(글 → 음성)   tts_bench.py, tts_supertonic.py
+얼굴·표정        face_vision.py, face_deepface.py, face.html, face_landmarker.task(모델 파일)
+목소리 톤        voice_affect.py, affect_items.py, affect_common.py
+녹음 페이지      record.html, record_server.py, style.html (내 목소리를 녹음해 시험 자료 만들기)
+answers.json     판정 시험용 고정 답변
+Dockerfile       후보 모델마다 따로 만드는 비교 전용 이미지
+*.sh             비교 다시 돌리기
+
+data/   시험 자료 (녹음 음성, 얼굴 사진, 후보별 TTS 결과)
+out/    실행 로그·결과
+
+결과는 records/speech_bench.csv, affect_bench.csv에 정리됨
+지워도 되나: 서비스에는 영향 없음 (Dockerfile에도 "비교가 끝나면 지워도 된다"고 적혀 있음)
+            단, 직접 녹음한 자료(data/)는 다시 만들기 번거로우니 필요하면 보관
