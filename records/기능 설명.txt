@@ -1,0 +1,17 @@
+시험·측정 기록 보관 (포트폴리오 엑셀 만들 때 씀)
+scripts/의 측정 스크립트와 tasks.ps1이 자동으로 여기에 쌓음
+
+test_runs.csv          시험 실행 기록 (언제, 몇 개 통과)
+measurements.csv       시간 측정 (응답 지연 등)
+speech_bench.csv       STT·TTS 모델 비교 결과
+affect_bench.csv       얼굴·표정·목소리 비교 결과
+judge_consistency.csv  AI 판정 일관성
+fairness.csv           집단별 점수 차이
+proctor_stats.csv      감독 경고 오탐
+interviews/            실제로 본 면접 기록 (JSON)
+docs/                  화면정의서·테스트화면 HTML, 예전 캡처
+screens.py             화면정의서 내용 (문서 만들 때 씀)
+worklog.py             날짜별 진행 기록
+.logs/                 최근 시험 로그 (pytest, vitest, e2e)
+
+지워도 되나: 서비스와는 상관없지만 기록이 사라지므로 지우지 말 것 (.logs/는 지워도 됨)

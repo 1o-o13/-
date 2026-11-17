@@ -1,0 +1,13 @@
+시험용 초기 데이터. tasks.ps1 seed가 DB에 넣음
+
+test_data.sql           관리자 3명, 지원자 50명, 공고 1개, 면접 설정 (비밀번호 모두 Test1234!)
+demo_accounts.sql       시연용 계정
+demo_haneul_coding.sql  시연용 지원자(김하늘) 코딩 결과
+doc_screen_cache.json   1차 서류 AI 검토 결과 저장본 (매번 LLM을 안 돌리려고)
+
+corpus_v3/, corpus_v3_add/   회사(새벽소프트, 가상) 문서. 면접 질문 근거로 검색됨 (지금 쓰는 것)
+corpus_6_1/, corpus_alt/     다른 버전 회사 문서 (시험·비교용)
+coding_bank/                 코딩 테스트 문제 모음 (slot1~3)
+resume_detail/               지원자 50명 상세 이력서·자기소개서 내용
+
+지워도 되나: 안 됨 (지우면 시험 데이터를 못 만듦)
